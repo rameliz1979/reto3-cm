@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solucion Reto 3 - Criptografia Moderna</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "sans-serif"],
+            mono: ["Consolas", "ui-monospace", "monospace"]
+          },
+          colors: {
+            ink: "#1f2937",
+            mint: "#0f766e",
+            plum: "#7c3aed",
+            rose: "#be123c",
+            amber: "#b45309"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    abbr[data-glossary] {
+      cursor: help;
+      color: #18181b;
+      font-weight: 800;
+      text-decoration: underline dotted;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+
+    abbr[data-glossary]:focus {
+      border-radius: 4px;
+      outline: 2px solid #7c3aed;
+      outline-offset: 2px;
+    }
+
+    .glossary-tooltip {
+      position: fixed;
+      z-index: 60;
+      width: min(280px, calc(100vw - 32px));
+      transform: translate(-50%, calc(-100% - 12px));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      background: #18181b;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28);
+      color: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+
+    .glossary-tooltip.is-visible {
+      opacity: 1;
+      transform: translate(-50%, calc(-100% - 16px));
+    }
+
+    .glossary-tooltip.is-below {
+      transform: translate(-50%, 12px);
+    }
+
+    .glossary-tooltip.is-below.is-visible {
+      transform: translate(-50%, 16px);
+    }
+
+    .glossary-tooltip::after {
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      transform: translateX(-50%) rotate(45deg);
+      background: #18181b;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      content: "";
+    }
+
+    .glossary-tooltip.is-below::after {
+      top: -7px;
+      bottom: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      border-right: 0;
+      border-bottom: 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .glossary-tooltip__term {
+      display: block;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 12px 8px;
+      color: #99f6e4;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .glossary-tooltip__meaning {
+      display: block;
+      padding: 10px 12px 12px;
+      color: #f4f4f5;
+      font-size: 0.82rem;
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-zinc-100 text-ink">
+  <header class="border-b border-zinc-200 bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <p class="text-sm font-bold uppercase tracking-wide text-mint">Solucion de la actividad</p>
+      <div class="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 class="text-2xl font-black text-zinc-950 sm:text-4xl">Reto 3: Prototipo criptografico para CryptoSec <abbr data-glossary tabindex="0" data-meaning="Sociedad por Acciones Simplificada">S.A.S.</abbr></h1>
+          <p class="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">
+            Paso a paso para desarrollar la solucion solicitada: <abbr data-glossary tabindex="0" data-meaning="Criptografia de Curvas Elipticas">ECC</abbr>, hash avanzado, pruebas de rendimiento, informe tecnico y video explicativo.
+          </p>
+        </div>
+        <button id="resetChecks" type="button" class="inline-flex w-fit items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-zinc-700">
+          <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+          Limpiar checks
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto grid max-w-6xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[280px_1fr] lg:px-8">
+    <aside class="lg:sticky lg:top-4 lg:self-start">
+      <section class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-zinc-700">Pasos</h2>
+          <span id="progressText" class="rounded-full bg-mint px-2.5 py-1 text-xs font-black text-white">0%</span>
+        </div>
+        <div class="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200">
+          <div id="progressBar" class="h-full w-0 bg-mint transition-all"></div>
+        </div>
+        <nav id="stepNav" class="mt-4 space-y-2"></nav>
+      </section>
+
+      <section class="mt-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+        <h2 class="text-sm font-black uppercase tracking-wide text-zinc-700">Entrega final</h2>
+        <div id="finalChecklist" class="mt-3 space-y-2"></div>
+      </section>
+    </aside>
+
+    <section class="space-y-5">
+      <article class="rounded-lg border border-zinc-200 bg-white shadow-sm">
+        <div class="border-b border-zinc-200 p-5">
+          <p id="stepNumber" class="text-sm font-black uppercase tracking-wide text-mint">Paso 1</p>
+          <h2 id="stepTitle" class="mt-1 text-2xl font-black text-zinc-950"></h2>
+          <p id="stepPurpose" class="mt-3 text-sm leading-6 text-zinc-600"></p>
+        </div>
+
+        <div class="grid gap-5 p-5 xl:grid-cols-[1fr_340px]">
+          <section>
+            <h3 class="text-base font-black text-zinc-950">Que se hace</h3>
+            <div id="stepActions" class="mt-3 space-y-3"></div>
+
+            <h3 class="mt-6 text-base font-black text-zinc-950">Resultado de este paso</h3>
+            <div id="stepResult" class="mt-3 rounded-lg border-l-4 border-mint bg-teal-50 p-4 text-sm leading-7 text-zinc-700"></div>
+          </section>
+
+          <section class="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <h3 class="text-base font-black text-zinc-950">Checklist</h3>
+            <div id="stepChecklist" class="mt-3 space-y-2"></div>
+          </section>
+        </div>
+      </article>
+
+      <article class="rounded-lg border border-zinc-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-3 border-b border-zinc-200 p-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-lg font-black text-zinc-950">Codigo de la solucion</h2>
+            <p class="mt-1 text-sm text-zinc-600">Fragmentos base para construir el prototipo solicitado.</p>
+          </div>
+          <div id="codeTabs" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center justify-between gap-3">
+            <p id="codeTitle" class="text-sm font-black uppercase tracking-wide text-zinc-700"></p>
+            <button id="copyCode" type="button" class="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-bold text-zinc-700 transition hover:border-plum hover:text-plum">
+              <i data-lucide="copy" class="h-4 w-4"></i>
+              Copiar
+            </button>
+          </div>
+          <pre class="mt-3 max-h-[560px] overflow-auto rounded-lg bg-zinc-950 p-4 text-xs leading-6 text-zinc-100"><code id="codeBlock"></code></pre>
+        </div>
+      </article>
+
+      <section class="grid gap-5 xl:grid-cols-2">
+        <article class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-black text-zinc-950">Tabla para resultados</h2>
+          <p class="mt-1 text-sm leading-6 text-zinc-600">Se llena con los datos obtenidos al ejecutar las pruebas.</p>
+          <div class="mt-4 overflow-x-auto rounded-lg border border-zinc-200">
+            <table class="min-w-full divide-y divide-zinc-200 text-sm">
+              <thead class="bg-zinc-50 text-left text-xs font-black uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th class="px-4 py-3">Operacion</th>
+                  <th class="px-4 py-3">Algoritmo</th>
+                  <th class="px-4 py-3">Valor a registrar</th>
+                </tr>
+              </thead>
+              <tbody id="resultRows" class="divide-y divide-zinc-200"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-black text-zinc-950">Conclusiones de la solucion</h2>
+          <div id="conclusions" class="mt-4 space-y-3"></div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <div id="glossaryTooltip" class="glossary-tooltip" role="tooltip" aria-hidden="true">
+    <span id="tooltipTerm" class="glossary-tooltip__term"></span>
+    <span id="tooltipMeaning" class="glossary-tooltip__meaning"></span>
+  </div>
+
+  <script>
+    const steps = [
+      {
+        title: "Preparar el proyecto en VS Code",
+        purpose: "Se crea el entorno de trabajo solicitado para desarrollar y ejecutar la practica desde la terminal integrada.",
+        actions: [
+          "Abrir VS Code y seleccionar Terminal > Nueva terminal.",
+          "Verificar que la terminal sea PowerShell.",
+          "Crear la carpeta reto3_criptografia y entrar a ella.",
+          "Crear el entorno virtual con python -m venv .venv.",
+          "Activar el entorno virtual con .\\.venv\\Scripts\\Activate.ps1.",
+          "Actualizar pip con python -m pip install --upgrade pip.",
+          "Instalar cryptography con python -m pip install cryptography.",
+          "No instalar hashlib con pip porque ya viene incluido en Python.",
+          "Verificar la instalacion importando cryptography y hashlib desde la terminal."
+        ],
+        result: "Al finalizar, la terminal debe mostrar (.venv) y el proyecto queda listo para trabajar con Python, cryptography y hashlib.",
+        checklist: [
+          "Terminal integrada de VS Code abierta",
+          "Entorno virtual .venv creado y activado",
+          "cryptography instalada y hashlib verificado"
+        ]
+      },
+      {
+        title: "Crear la estructura de archivos",
+        purpose: "Se separa el codigo funcional, el benchmark y los resultados para que la entrega quede organizada.",
+        actions: [
+          "Crear el archivo prototipo_crypto.py para la implementacion principal.",
+          "Crear el archivo benchmark_crypto.py para las pruebas de rendimiento.",
+          "Crear la carpeta resultados para guardar salidas de consola, tablas o capturas.",
+          "Agregar al inicio de cada archivo una descripcion corta del proposito del codigo.",
+          "Usar nombres claros para funciones: generar_claves, firmar_mensaje, verificar_firma, calcular_hashes y medir_tiempo."
+        ],
+        result: "La solucion queda organizada en archivos faciles de revisar: uno para el prototipo, otro para las mediciones y una carpeta para evidencias.",
+        checklist: [
+          "prototipo_crypto.py creado",
+          "benchmark_crypto.py creado",
+          "Carpeta resultados creada"
+        ]
+      },
+      {
+        title: "Generar claves ECC con SECP384R1",
+        purpose: "Se implementa la parte de criptografia de curvas elipticas indicada en el anexo.",
+        actions: [
+          "Importar ec desde cryptography.hazmat.primitives.asymmetric.",
+          "Importar hashes desde cryptography.hazmat.primitives.",
+          "Generar la clave privada con ec.generate_private_key(ec.SECP384R1()).",
+          "Derivar la clave publica con private_key.public_key().",
+          "Mostrar en consola que las claves fueron creadas correctamente.",
+          "Usar estas claves en los pasos de firma y verificacion."
+        ],
+        result: "El programa genera un par de claves ECC usando la curva SECP384R1, tal como propone el anexo.",
+        checklist: [
+          "Bibliotecas importadas",
+          "Clave privada generada",
+          "Clave publica derivada"
+        ]
+      },
+      {
+        title: "Firmar y verificar el mensaje con ECDSA",
+        purpose: "Se demuestra autenticidad e integridad mediante firma digital con curvas elipticas.",
+        actions: [
+          "Definir el mensaje: b'Este es un mensaje seguro.'.",
+          "Firmar el mensaje con private_key.sign(message, ec.ECDSA(hashes.SHA256())).",
+          "Verificar la firma con public_key.verify(signature, message, ec.ECDSA(hashes.SHA256())).",
+          "Controlar errores con InvalidSignature para mostrar si la firma es valida o invalida.",
+          "Hacer una prueba adicional alterando el mensaje para demostrar que la verificacion falla."
+        ],
+        result: "La firma valida confirma que el mensaje corresponde al emisor y que no fue alterado; la firma falla cuando el mensaje cambia.",
+        checklist: [
+          "Mensaje firmado",
+          "Firma verificada correctamente",
+          "Mensaje alterado rechazado"
+        ]
+      },
+      {
+        title: "Calcular funciones hash avanzadas",
+        purpose: "Se implementan las funciones hash solicitadas para comparar huellas criptograficas.",
+        actions: [
+          "Importar hashlib.",
+          "Definir el mensaje: b'Este es un mensaje para hashear.'.",
+          "Calcular SHA-256 con hashlib.sha256(message).hexdigest().",
+          "Calcular SHA-512 con hashlib.sha512(message).hexdigest().",
+          "Calcular BLAKE2b con hashlib.blake2b(message).hexdigest().",
+          "Calcular SHA3-256 con hashlib.sha3_256(message).hexdigest().",
+          "Alterar el mensaje y comprobar que las huellas cambian."
+        ],
+        result: "El programa genera huellas criptograficas con SHA-256, SHA-512, BLAKE2b y SHA3-256, permitiendo verificar integridad y comparar algoritmos.",
+        checklist: [
+          "SHA-256 calculado",
+          "SHA-512 calculado",
+          "BLAKE2b y SHA3-256 calculados"
+        ]
+      },
+      {
+        title: "Medir tiempo de ejecucion de hashes",
+        purpose: "Se usa time para medir cuanto tarda cada algoritmo hash.",
+        actions: [
+          "Importar time.",
+          "Tomar el tiempo inicial con time.time().",
+          "Ejecutar el algoritmo hash.",
+          "Tomar el tiempo final con time.time().",
+          "Restar tiempo final menos tiempo inicial.",
+          "Imprimir el resultado en segundos.",
+          "Repetir la medicion para SHA-256, SHA-512, BLAKE2b y SHA3-256."
+        ],
+        result: "Se obtiene el tiempo de ejecucion individual de cada funcion hash y se prepara la comparacion de rendimiento.",
+        checklist: [
+          "time importado",
+          "Tiempos individuales calculados",
+          "Resultados impresos en segundos"
+        ]
+      },
+      {
+        title: "Medir rendimiento de firma y verificacion",
+        purpose: "Se ejecutan pruebas repetidas para obtener tiempos promedio de ECC con ECDSA.",
+        actions: [
+          "Definir num_iterations = 100 como indica el anexo.",
+          "Crear un acumulador total_time para la firma.",
+          "Ejecutar un bucle de 100 firmas y acumular cada tiempo.",
+          "Dividir total_time entre num_iterations para obtener el promedio.",
+          "Repetir el proceso para la verificacion de la firma.",
+          "Imprimir el tiempo promedio de firma y el tiempo promedio de verificacion."
+        ],
+        result: "Se obtienen tiempos promedio de firma y verificacion ECDSA, evitando depender de una sola ejecucion.",
+        checklist: [
+          "100 iteraciones configuradas",
+          "Tiempo promedio de firma calculado",
+          "Tiempo promedio de verificacion calculado"
+        ]
+      },
+      {
+        title: "Comparar algoritmos hash",
+        purpose: "Se comparan los algoritmos sugeridos en el anexo para identificar diferencias de rendimiento.",
+        actions: [
+          "Crear una lista con algorithms = ['sha256', 'sha512', 'blake2b', 'sha3_256'].",
+          "Recorrer la lista con un ciclo for.",
+          "Obtener cada funcion con getattr(hashlib, algo).",
+          "Medir el tiempo de ejecucion de cada algoritmo.",
+          "Imprimir el tiempo de cada algoritmo en segundos.",
+          "Registrar los valores en la tabla de resultados."
+        ],
+        result: "La comparacion permite observar que todos generan huellas seguras, pero no todos tardan lo mismo al procesar el mensaje.",
+        checklist: [
+          "Lista de algoritmos creada",
+          "Comparacion ejecutada",
+          "Valores registrados"
+        ]
+      },
+      {
+        title: "Documentar resultados y entregar",
+        purpose: "Se organiza la evidencia tecnica de la solucion para el informe y el video.",
+        actions: [
+          "Copiar en una tabla los tiempos de firma, verificacion y hash.",
+          "Explicar que ECC con SECP384R1 se uso para firma digital.",
+          "Explicar que SHA-256, SHA-512, BLAKE2b y SHA3-256 se usaron para integridad.",
+          "Incluir capturas de la terminal de VS Code mostrando la ejecucion.",
+          "Redactar conclusiones sobre autenticidad, integridad y rendimiento.",
+          "Grabar un video corto explicando los archivos, la ejecucion y los resultados."
+        ],
+        result: "La entrega final queda completa: codigo funcional, pruebas ejecutadas, tabla de rendimiento, conclusiones y video explicativo.",
+        checklist: [
+          "Tabla de resultados elaborada",
+          "Informe redactado",
+          "Video explicativo grabado"
+        ]
+      }
+    ];
+
+    const finalItems = [
+      "Carpeta del proyecto creada desde la terminal de VS Code.",
+      "Entorno virtual .venv activado.",
+      "Codigo fuente prototipo_crypto.py funcional.",
+      "Codigo benchmark_crypto.py con pruebas de 100 iteraciones.",
+      "Tabla con tiempos de firma, verificacion y hashes.",
+      "Informe tecnico con metodologia, resultados y conclusiones.",
+      "Video mostrando la ejecucion del codigo en VS Code."
+    ];
+
+    const snippets = {
+      setup: {
+        label: "Entorno",
+        title: "Terminal de VS Code: crear entorno virtual e instalar dependencias",
+        code: `# 1. Abrir VS Code
+# Menu: Terminal > Nueva terminal
+
+# 2. Crear carpeta de trabajo
+mkdir reto3_criptografia
+cd reto3_criptografia
+
+# 3. Verificar Python
+python --version
+
+# 4. Crear entorno virtual
+python -m venv .venv
+
+# 5. Activar entorno virtual en PowerShell
+.\\.venv\\Scripts\\Activate.ps1
+
+# La terminal debe mostrar algo parecido:
+# (.venv) PS C:\\...\\reto3_criptografia>
+
+# 6. Actualizar pip
+python -m pip install --upgrade pip
+
+# 7. Instalar cryptography
+python -m pip install cryptography
+
+# 8. Verificar bibliotecas
+python -c "import hashlib; print('hashlib OK')"
+python -c "from cryptography.hazmat.primitives.asymmetric import ec; print('cryptography OK')"
+
+# 9. Crear archivos de trabajo
+New-Item -ItemType File -Path .\\prototipo_crypto.py -Force
+New-Item -ItemType File -Path .\\benchmark_crypto.py -Force
+New-Item -ItemType Directory -Path .\\resultados -Force
+
+# Si PowerShell bloquea la activacion, ejecutar una sola vez:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+      },
+      prototipo: {
+        label: "Prototipo",
+        title: "prototipo_crypto.py: ECC, ECDSA y funciones hash",
+        code: `"""
+Prototipo criptografico para el Reto 3.
+Implementa claves ECC, firma digital ECDSA y funciones hash avanzadas.
+"""
+
+import hashlib
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+
+
+def generar_claves():
+    private_key = ec.generate_private_key(ec.SECP384R1())
+    public_key = private_key.public_key()
+    return private_key, public_key
+
+
+def firmar_mensaje(private_key, message):
+    return private_key.sign(message, ec.ECDSA(hashes.SHA256()))
+
+
+def verificar_firma(public_key, signature, message):
+    try:
+        public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
+        return True
+    except InvalidSignature:
+        return False
+
+
+def calcular_hashes(message):
+    return {
+        "SHA-256": hashlib.sha256(message).hexdigest(),
+        "SHA-512": hashlib.sha512(message).hexdigest(),
+        "BLAKE2b": hashlib.blake2b(message).hexdigest(),
+        "SHA3-256": hashlib.sha3_256(message).hexdigest(),
+    }
+
+
+def main():
+    message = b"Este es un mensaje seguro."
+    altered_message = b"Este es un mensaje alterado."
+
+    private_key, public_key = generar_claves()
+    signature = firmar_mensaje(private_key, message)
+
+    print("=== FIRMA DIGITAL ECC / ECDSA ===")
+    print("Firma valida:", verificar_firma(public_key, signature, message))
+    print("Firma con mensaje alterado:", verificar_firma(public_key, signature, altered_message))
+
+    print("\\n=== HASHES DEL MENSAJE ORIGINAL ===")
+    for name, digest in calcular_hashes(message).items():
+        print(name, ":", digest)
+
+    print("\\n=== HASHES DEL MENSAJE ALTERADO ===")
+    for name, digest in calcular_hashes(altered_message).items():
+        print(name, ":", digest)
+
+
+if __name__ == "__main__":
+    main()`
+      },
+      firma: {
+        label: "Firma",
+        title: "Implementacion puntual de firma y verificacion ECDSA",
+        code: `from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+
+
+message = b"Este es un mensaje seguro."
+
+private_key = ec.generate_private_key(ec.SECP384R1())
+public_key = private_key.public_key()
+
+signature = private_key.sign(message, ec.ECDSA(hashes.SHA256()))
+
+try:
+    public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
+    print("La firma es valida.")
+except InvalidSignature:
+    print("La firma no es valida.")`
+      },
+      hash: {
+        label: "Hashes",
+        title: "Comparacion de SHA-256, SHA-512, BLAKE2b y SHA3-256",
+        code: `import hashlib
+
+
+message = b"Este es un mensaje para hashear."
+
+algorithms = ["sha256", "sha512", "blake2b", "sha3_256"]
+
+for algo in algorithms:
+    hash_func = getattr(hashlib, algo)
+    hash_hex = hash_func(message).hexdigest()
+    print(algo, ":", hash_hex)`
+      },
+      benchmark: {
+        label: "Benchmark",
+        title: "benchmark_crypto.py: pruebas de rendimiento del anexo",
+        code: `"""
+Pruebas de rendimiento para ECC/ECDSA y funciones hash.
+Usa 100 iteraciones como propone el anexo.
+"""
+
+import hashlib
+import time
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+
+
+message = b"Este es un mensaje seguro."
+private_key = ec.generate_private_key(ec.SECP384R1())
+public_key = private_key.public_key()
+num_iterations = 100
+
+
+def medir_hashes():
+    print("=== TIEMPOS DE HASH ===")
+    algorithms = ["sha256", "sha512", "blake2b", "sha3_256"]
+
+    for algo in algorithms:
+        hash_func = getattr(hashlib, algo)
+        start_time = time.time()
+        hash_func(message).hexdigest()
+        end_time = time.time()
+        print("{}: {:.10f} segundos".format(algo, end_time - start_time))
+
+
+def medir_firma():
+    total_time = 0
+
+    for _ in range(num_iterations):
+        start_time = time.time()
+        private_key.sign(message, ec.ECDSA(hashes.SHA256()))
+        end_time = time.time()
+        total_time += end_time - start_time
+
+    print("Tiempo promedio de firma: {:.10f} segundos".format(total_time / num_iterations))
+
+
+def medir_verificacion():
+    signature = private_key.sign(message, ec.ECDSA(hashes.SHA256()))
+    total_time = 0
+
+    for _ in range(num_iterations):
+        start_time = time.time()
+        public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
+        end_time = time.time()
+        total_time += end_time - start_time
+
+    print("Tiempo promedio de verificacion: {:.10f} segundos".format(total_time / num_iterations))
+
+
+if __name__ == "__main__":
+    medir_hashes()
+    print("\\n=== TIEMPOS ECC / ECDSA ===")
+    medir_firma()
+    medir_verificacion()`
+      },
+      reporte: {
+        label: "Informe",
+        title: "Estructura breve para documentar la solucion",
+        code: `1. Introduccion
+   Describir el uso de ECC, ECDSA y funciones hash en ciberseguridad.
+
+2. Metodologia
+   Explicar entorno en VS Code, Python, cryptography y hashlib.
+
+3. Implementacion
+   Mostrar generacion de claves SECP384R1, firma ECDSA y hashes.
+
+4. Pruebas
+   Incluir evidencia de firma valida, firma invalida con mensaje alterado y hashes.
+
+5. Resultados
+   Registrar tiempos de sha256, sha512, blake2b, sha3_256, firma y verificacion.
+
+6. Analisis
+   Comparar tiempos y explicar diferencias entre operaciones hash y ECC.
+
+7. Conclusiones
+   Indicar si la solucion cumple autenticidad, integridad y rendimiento esperado.`
+      }
+    };
+
+    const resultRows = [
+      ["Generacion de claves", "ECC SECP384R1", "Confirmar clave privada y clave publica creadas"],
+      ["Firma", "ECDSA + SHA-256", "Tiempo promedio en 100 iteraciones"],
+      ["Verificacion", "ECDSA + SHA-256", "Tiempo promedio en 100 iteraciones"],
+      ["Hash", "SHA-256", "Tiempo de ejecucion y huella generada"],
+      ["Hash", "SHA-512", "Tiempo de ejecucion y huella generada"],
+      ["Hash", "BLAKE2b", "Tiempo de ejecucion y huella generada"],
+      ["Hash", "SHA3-256", "Tiempo de ejecucion y huella generada"]
+    ];
+
+    const conclusions = [
+      ["Autenticidad", "ECDSA con ECC permite verificar que el mensaje fue firmado con la clave privada correspondiente."],
+      ["Integridad", "SHA-256, SHA-512, BLAKE2b y SHA3-256 generan huellas que cambian cuando el mensaje se modifica."],
+      ["Rendimiento", "Las funciones hash suelen ejecutarse mas rapido que las operaciones ECC de firma y verificacion."],
+      ["Entrega", "La solucion queda completa cuando se presenta codigo, tabla de tiempos, analisis de resultados, informe y video en VS Code."]
+    ];
+
+    const state = {
+      step: Number(localStorage.getItem("solution.step") || 0),
+      code: localStorage.getItem("solution.code") || "setup",
+      checks: JSON.parse(localStorage.getItem("solution.checks") || "{}")
+    };
+
+    if (!steps[state.step]) state.step = 0;
+    if (!snippets[state.code]) state.code = "setup";
+
+    const glossary = {
+      "BLAKE2b": "Funcion hash criptografica rapida y segura, util para verificar integridad.",
+      "cryptography": "Biblioteca externa de Python usada para operaciones criptograficas como ECC y ECDSA.",
+      "ECC": "Elliptic Curve Cryptography. Criptografia de Curvas Elipticas.",
+      "ECDSA": "Elliptic Curve Digital Signature Algorithm. Algoritmo de firma digital con curvas elipticas.",
+      "hashlib": "Modulo incluido en Python para calcular funciones hash como SHA-256, SHA-512, BLAKE2b y SHA3-256.",
+      "KB": "Kilobyte. Unidad de tamano de datos.",
+      "PowerShell": "Terminal de comandos de Windows que se puede usar dentro de VS Code.",
+      "Python": "Lenguaje de programacion usado para implementar la solucion.",
+      "S.A.S.": "Sociedad por Acciones Simplificada.",
+      "SECP384R1": "Curva eliptica de 384 bits usada para generar claves ECC.",
+      "SHA-256": "Secure Hash Algorithm de 256 bits. Funcion hash criptografica.",
+      "SHA-512": "Secure Hash Algorithm de 512 bits. Funcion hash criptografica.",
+      "SHA-3": "Secure Hash Algorithm 3. Familia moderna de funciones hash criptograficas.",
+      "SHA3-256": "Variante de SHA-3 que produce una huella criptografica de 256 bits.",
+      "VS Code": "Visual Studio Code. Editor usado para escribir codigo y ejecutar la terminal integrada.",
+      "pip": "Instalador de paquetes de Python."
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeRegExp(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function explainSiglas(text) {
+      let safe = escapeHtml(text);
+      const terms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+      const pattern = new RegExp(`(^|[^A-Za-z0-9.])(${terms.map(escapeRegExp).join("|")})(?=$|[^A-Za-z0-9.])`, "g");
+
+      return safe.replace(pattern, (match, prefix, hit) => {
+        const meaning = escapeHtml(glossary[hit]);
+        return `${prefix}<abbr data-glossary tabindex="0" data-meaning="${meaning}">${hit}</abbr>`;
+      });
+    }
+
+    function positionTooltip(target) {
+      const tooltip = $("#glossaryTooltip");
+      const rect = target.getBoundingClientRect();
+      const tooltipWidth = tooltip.offsetWidth || 280;
+      const margin = 16;
+      const isBelow = rect.top < 140;
+      let left = rect.left + rect.width / 2;
+      left = Math.max(margin + tooltipWidth / 2, Math.min(window.innerWidth - margin - tooltipWidth / 2, left));
+      const top = isBelow ? rect.bottom : rect.top;
+
+      tooltip.classList.toggle("is-below", isBelow);
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+    }
+
+    function showTooltip(target) {
+      const tooltip = $("#glossaryTooltip");
+      $("#tooltipTerm").textContent = target.textContent;
+      $("#tooltipMeaning").textContent = target.dataset.meaning;
+      tooltip.setAttribute("aria-hidden", "false");
+      tooltip.classList.add("is-visible");
+      positionTooltip(target);
+    }
+
+    function hideTooltip() {
+      const tooltip = $("#glossaryTooltip");
+      tooltip.classList.remove("is-visible");
+      tooltip.setAttribute("aria-hidden", "true");
+    }
+
+    function bindGlossaryTooltips() {
+      document.querySelectorAll("abbr[data-glossary]").forEach((abbr) => {
+        if (abbr.dataset.tooltipBound) return;
+        abbr.dataset.tooltipBound = "true";
+        abbr.addEventListener("mouseenter", () => showTooltip(abbr));
+        abbr.addEventListener("mousemove", () => positionTooltip(abbr));
+        abbr.addEventListener("mouseleave", hideTooltip);
+        abbr.addEventListener("focus", () => showTooltip(abbr));
+        abbr.addEventListener("blur", hideTooltip);
+      });
+    }
+
+    function save() {
+      localStorage.setItem("solution.step", state.step);
+      localStorage.setItem("solution.code", state.code);
+      localStorage.setItem("solution.checks", JSON.stringify(state.checks));
+    }
+
+    function checkInput(key, label) {
+      return `
+        <label class="flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3 text-sm leading-5 text-zinc-700">
+          <input data-check="${key}" type="checkbox" class="mt-0.5 h-4 w-4 rounded border-zinc-300 text-mint focus:ring-mint" ${state.checks[key] ? "checked" : ""}>
+          <span>${explainSiglas(label)}</span>
+        </label>
+      `;
+    }
+
+    function bindChecks() {
+      document.querySelectorAll("[data-check]").forEach((input) => {
+        input.addEventListener("change", () => {
+          state.checks[input.dataset.check] = input.checked;
+          save();
+          renderProgress();
+        });
+      });
+    }
+
+    function renderNav() {
+      $("#stepNav").innerHTML = steps.map((step, index) => {
+        const active = state.step === index;
+        return `
+          <button data-step="${index}" type="button" class="w-full rounded-lg border px-3 py-3 text-left transition ${
+            active ? "border-mint bg-teal-50 text-mint" : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+          }">
+            <span class="flex items-center gap-3">
+              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-black ${active ? "bg-mint text-white" : "bg-zinc-100 text-zinc-700"}">${index + 1}</span>
+              <span class="text-sm font-bold">${explainSiglas(step.title)}</span>
+            </span>
+          </button>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-step]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.step = Number(button.dataset.step);
+          save();
+          render();
+        });
+      });
+    }
+
+    function renderStep() {
+      const step = steps[state.step];
+      $("#stepNumber").textContent = `Paso ${state.step + 1}`;
+      $("#stepTitle").innerHTML = explainSiglas(step.title);
+      $("#stepPurpose").innerHTML = explainSiglas(step.purpose);
+      $("#stepActions").innerHTML = step.actions.map((item, index) => `
+        <div class="flex gap-3 rounded-lg border border-zinc-200 p-3">
+          <span class="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-900 text-xs font-black text-white">${index + 1}</span>
+          <p class="text-sm leading-6 text-zinc-700">${explainSiglas(item)}</p>
+        </div>
+      `).join("");
+      $("#stepResult").innerHTML = explainSiglas(step.result);
+      $("#stepChecklist").innerHTML = step.checklist.map((item, index) => checkInput(`step-${state.step}-${index}`, item)).join("");
+    }
+
+    function renderFinalChecklist() {
+      $("#finalChecklist").innerHTML = finalItems.map((item, index) => checkInput(`final-${index}`, item)).join("");
+    }
+
+    function renderCode() {
+      $("#codeTabs").innerHTML = Object.entries(snippets).map(([key, value]) => `
+        <button data-code="${key}" type="button" class="rounded-lg px-3 py-2 text-sm font-bold transition ${
+          state.code === key ? "bg-plum text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+        }">${explainSiglas(value.label)}</button>
+      `).join("");
+
+      document.querySelectorAll("[data-code]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.code = button.dataset.code;
+          save();
+          renderCode();
+        });
+      });
+
+      $("#codeTitle").innerHTML = explainSiglas(snippets[state.code].title);
+      $("#codeBlock").textContent = snippets[state.code].code;
+    }
+
+    function renderTables() {
+      $("#resultRows").innerHTML = resultRows.map((row) => `
+        <tr>
+          <td class="px-4 py-3 font-bold text-zinc-900">${explainSiglas(row[0])}</td>
+          <td class="px-4 py-3 text-zinc-700">${explainSiglas(row[1])}</td>
+          <td class="px-4 py-3 text-zinc-600">${explainSiglas(row[2])}</td>
+        </tr>
+      `).join("");
+
+      $("#conclusions").innerHTML = conclusions.map(([title, text], index) => {
+        const colors = ["border-mint", "border-plum", "border-amber", "border-rose"];
+        return `
+          <div class="rounded-lg border border-zinc-200 border-l-4 ${colors[index]} p-4">
+            <h3 class="text-sm font-black text-zinc-950">${explainSiglas(title)}</h3>
+            <p class="mt-2 text-sm leading-6 text-zinc-600">${explainSiglas(text)}</p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderProgress() {
+      const totalStepChecks = steps.reduce((sum, step) => sum + step.checklist.length, 0);
+      const total = totalStepChecks + finalItems.length;
+      let done = 0;
+
+      steps.forEach((step, stepIndex) => {
+        step.checklist.forEach((_, itemIndex) => {
+          if (state.checks[`step-${stepIndex}-${itemIndex}`]) done += 1;
+        });
+      });
+
+      finalItems.forEach((_, index) => {
+        if (state.checks[`final-${index}`]) done += 1;
+      });
+
+      const percent = Math.round((done / total) * 100);
+      $("#progressText").textContent = `${percent}%`;
+      $("#progressBar").style.width = `${percent}%`;
+    }
+
+    function render() {
+      renderNav();
+      renderStep();
+      renderFinalChecklist();
+      renderCode();
+      renderTables();
+      bindChecks();
+      renderProgress();
+      bindGlossaryTooltips();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    $("#copyCode").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(snippets[state.code].code);
+      const old = $("#copyCode").innerHTML;
+      $("#copyCode").innerHTML = '<i data-lucide="check" class="h-4 w-4"></i> Copiado';
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        $("#copyCode").innerHTML = old;
+        if (window.lucide) lucide.createIcons();
+      }, 1200);
+    });
+
+    $("#resetChecks").addEventListener("click", () => {
+      state.checks = {};
+      state.step = 0;
+      state.code = "setup";
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
